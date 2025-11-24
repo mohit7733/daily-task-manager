@@ -15,8 +15,8 @@ const Navbar = () => {
         </Link>
         <div className="navbar-links">
           <Link to="/dashboard" className="nav-link">Dashboard</Link>
-          <Link to="/tasks" className="nav-link">Tasks</Link>
-          <Link to="/timeline" className="nav-link">Timeline</Link>
+          {canViewTeam && <Link to="/tasks" className="nav-link">Tasks</Link>}
+          {canViewTeam && <Link to="/timeline" className="nav-link">Timeline</Link>}
           <Link to="/standup" className="nav-link">Standup</Link>
           <Link to="/my-standups" className="nav-link">My Standups</Link>
           {canViewTeam && <Link to="/team" className="nav-link">Team</Link>}
