@@ -75,9 +75,9 @@ const Dashboard = () => {
             <Link to="/standup" className="primary-btn">
               Submit standup
             </Link>
-            <Link to="/tasks" className="ghost-btn">
+            {/* <Link to="/tasks" className="ghost-btn">
               Create tasks
-            </Link>
+            </Link> */}
           </div>
         </div>
 
