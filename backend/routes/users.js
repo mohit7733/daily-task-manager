@@ -49,6 +49,10 @@ const transporter = nodemailer.createTransport({
     user: "mohitbeniwal@aimantra.co",
     pass: "cizh mbxz kzan bdci" // process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
+  connectionTimeout: 20000, // Render needs longer timeout
 });
 
 // helper to send a single email
