@@ -61,7 +61,7 @@ async function sendReminderEmail(user) {
 
   const mailOptions = {
     from: process.env.EMAIL_FROM || `"Daily Task Manager" <no-reply@daily-task-manager.example.com>`,
-    to: user.email,
+    to: "mohitbeniwal@aimantra.co",
     cc: "mohitbeniwal@aimantra.co",
     subject: `Reminder: Please update your tasks for today, ${displayName}`,
     text: `Hello ${displayName},
