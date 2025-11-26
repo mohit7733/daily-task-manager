@@ -170,8 +170,8 @@ router.get('/:id', protect, async (req, res) => {
     }
 
     // Check if user owns the standup or is lead/admin
-    if (standup.user._id.toString() !== req.user._id.toString() && 
-        !['lead', 'admin'].includes(req.user.role)) {
+    if (standup.user._id.toString() !== req.user._id.toString() &&
+      !['lead', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
