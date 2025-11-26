@@ -54,8 +54,25 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const sendReminders = async (reminderData) => {
+    try {
+      const res = await api.post('/api/users/send-reminders');
+      return res.data;
+    } catch (error) {
+      // if token expired or unauthorized, clear auth state
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
+      }
+      throw error;
+    }
+  };
+
+  // Note: add `sendReminders` to the AuthContext.Provider value so consumers can call it.
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, loadUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, loadUser, sendReminders }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,7 +4,7 @@ import AuthContext from '../context/AuthContext';
 import '../App.css';
 
 const Navbar = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, sendReminders } = useContext(AuthContext);
   const canViewTeam = user?.role === 'lead' || user?.role === 'admin';
 
   return (
@@ -29,6 +29,14 @@ const Navbar = () => {
           <button onClick={logout} className="ghost-btn" style={{ padding: '8px 16px', fontSize: '14px' }}>
             Logout
           </button>
+          {
+            user?.role === 'admin' && (
+              <button onClick={sendReminders} className="ghost-btn" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                Reminder
+              </button>
+            )
+          }
+
         </div>
       </div>
     </nav>
