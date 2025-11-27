@@ -57,7 +57,9 @@ const TeamView = () => {
   const submittedUsers = standups.map(s => s.user._id.toString());
   const missingUsers = users.filter(u =>
     (!selectedTeam || u.team === selectedTeam) &&
-    !submittedUsers.includes(u._id.toString())
+    !submittedUsers.includes(u._id.toString()) &&
+    u.role !== 'lead' &&
+    u.role !== 'admin'
   );
 
   return (

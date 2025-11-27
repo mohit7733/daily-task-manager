@@ -3,7 +3,7 @@ const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
-const Task = require('../models/Task');
+const Standup = require('../models/Standup');
 
 const router = express.Router();
 
@@ -65,7 +65,7 @@ async function sendReminderEmail(user) {
 
   const mailOptions = {
     from: process.env.EMAIL_FROM || `"Daily Task Manager" <no-reply@daily-task-manager.example.com>`,
-    to: "mohitbeniwal@aimantra.co",
+    to: user.email,
     cc: "mohitbeniwal@aimantra.co",
     subject: `Reminder: Please update your tasks for today, ${displayName}`,
     text: `Hello ${displayName},
@@ -178,41 +178,40 @@ async function sendReminderEmail(user) {
 // main job: fetch users and send reminders individually
 async function sendDailyReminders() {
   try {
-    // define today's range in server timezone (start = 00:00:00, end = 23:59:59.999)
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    // Get today's date range
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // fetch users with emails (and role if you want to skip leads/admins)
-    const users = await User.find().select('name email role').sort({ name: 1 });
+    // Fetch all users except admin/lead
+    const users = await User.find({
+      role: { $nin: ['lead', 'admin'] }
+    }).select('name email role');
 
     for (const user of users) {
-      try {
-        if (!user.email) continue;
+      if (!user.email) continue;
 
-        // optionally skip leads/admins
-        if (user.role && ['lead', 'admin'].includes(user.role)) continue;
+      // Check ONLY today's task
+      const hasTaskToday = await Standup.exists({
+        user: user._id,
+        createdAt: { $gte: today, $lte: tomorrow },
+      });
 
-        // check if the user has any task created today
-        const hasTaskToday = await Task.exists({
-          user: user._id,
-          createdAt: { $gte: startOfDay, $lte: endOfDay },
-        });
-
-        // send reminder only if they have NOT added a task today
-        if (!hasTaskToday) {
-          await sendReminderEmail(user);
-          console.log('Daily reminders job completed');
-        }
-      } catch (err) {
-        console.error(`Failed processing user ${user.email || user._id}:`, err);
+      if (!hasTaskToday) {
+        await sendReminderEmail(user);
+        console.log(`${user.email} - Reminder sent`);
+      } else {
+        console.log(`${user.email} - Already added task today`);
       }
     }
+
+    console.log("Daily reminder job completed");
   } catch (err) {
-    console.error('Error fetching users for reminders:', err);
+    console.error("Error in reminder job:", err);
   }
 }
+
 
 // scheduled job: runs weekdays (Mon-Fri) at 10:00 (server timezone or specify TIMEZONE env)
 const cronSchedule = process.env.REMINDER_CRON || '0 11 * * 1-5'; // default 11:00 Mon-Fri
