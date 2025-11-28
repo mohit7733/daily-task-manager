@@ -303,10 +303,12 @@
   color: var(--text);
   padding: 6px 10px;
 }
+
 .task-footer select option {
   background: var(--surface-02);
   color: var(--text);
 }
+
 .timeline-list {
   display: flex;
   flex-direction: column;
@@ -392,10 +394,10 @@
   cursor: pointer;
 }
 
-.form-group select option {
+select option {
   background: var(--primary);
   color: var(--text);
-  
+
 }
 
 .form-group textarea {
@@ -475,4 +477,3 @@
     padding: 20px;
   }
 }
-
