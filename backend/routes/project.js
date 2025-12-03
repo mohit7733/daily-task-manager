@@ -21,7 +21,7 @@ router.post('/', protect, authorize('lead', 'admin'), async (req, res) => {
 });
 
 // READ - Get all projects
-router.get('/', protect, authorize('lead', 'admin'), async (req, res) => {
+router.get('/', protect, async (req, res) => {
     try {
         const Projectdata = await Projects.find({});
         console.log(Projectdata);
