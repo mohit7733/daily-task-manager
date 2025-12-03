@@ -11,7 +11,8 @@ const router = express.Router();
 router.post('/', protect, [
   body('completedYesterday').trim().notEmpty().withMessage('Completed yesterday is required'),
   body('planToday').trim().notEmpty().withMessage('Plan for today is required'),
-  body('blockers').optional().trim()
+  body('blockers').optional().trim(),
+  body('projectName').optional().trim()
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -19,7 +20,7 @@ router.post('/', protect, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { completedYesterday, planToday, blockers } = req.body;
+    const { completedYesterday, planToday, blockers, projectName } = req.body;
 
     // Check if standup already exists for today
     const today = new Date();
@@ -37,6 +38,7 @@ router.post('/', protect, [
       existingStandup.completedYesterday = completedYesterday;
       existingStandup.planToday = planToday;
       existingStandup.blockers = blockers || 'None';
+      existingStandup.projectName = projectName;
       const updatedStandup = await existingStandup.save();
       return res.json(updatedStandup);
     }
@@ -47,10 +49,11 @@ router.post('/', protect, [
       date: new Date(),
       completedYesterday,
       planToday,
+      projectName,
       blockers: blockers || 'None'
     });
 
-    const populatedStandup = await Standup.findById(standup._id).populate('user', 'name email role team');
+    const populatedStandup = await Standup.findById(standup._id).populate('user', 'name email role team projectName');
 
     res.status(201).json(populatedStandup);
   } catch (error) {
@@ -116,7 +119,7 @@ router.get('/today', protect, async (req, res) => {
 // @access  Private (Lead/Admin only)
 router.get('/team', protect, authorize('lead', 'admin'), async (req, res) => {
   try {
-    const { date, team, userId } = req.query;
+    const { date, team, userId, project } = req.query;
     let query = {};
 
     // Filter by date if provided
@@ -149,7 +152,9 @@ router.get('/team', protect, authorize('lead', 'admin'), async (req, res) => {
         (s) => s.user && s.user._id.toString() === userId
       );
     }
-
+    if (project) {
+      filteredStandups = filteredStandups.filter(s => s.projectName === project);
+    }
     res.json(filteredStandups);
   } catch (error) {
     console.error(error);

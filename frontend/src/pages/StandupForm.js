@@ -9,10 +9,12 @@ const StandupForm = () => {
   const [formData, setFormData] = useState({
     completedYesterday: '',
     planToday: '',
-    blockers: ''
+    blockers: '',
+    projectName: ''
   });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,11 +24,14 @@ const StandupForm = () => {
   const fetchTodayStandup = async () => {
     try {
       const res = await api.get('/api/standups/today');
+      const projectRes = await api.get('/api/project');
+      setProjects(projectRes.data);
       if (res.data) {
         setFormData({
           completedYesterday: res.data.completedYesterday || '',
           planToday: res.data.planToday || '',
-          blockers: res.data.blockers || ''
+          blockers: res.data.blockers || '',
+          projectName: res.data.projectName || ''
         });
       }
     } catch (error) {
@@ -117,6 +122,21 @@ const StandupForm = () => {
                 placeholder="List any blockers or areas where you need help. If none, leave blank or type 'None'."
                 rows={3}
               />
+            </div>
+
+            <div className="form-group">
+              <label>4️⃣ Project Name</label>
+              <select
+                name="projectName"
+                value={formData.projectName || ''}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select a project</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project.name}>{project.name}</option>
+                ))}
+              </select>
             </div>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>

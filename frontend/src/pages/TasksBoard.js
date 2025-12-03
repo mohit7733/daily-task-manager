@@ -81,6 +81,10 @@ const TasksBoard = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerTask, setDrawerTask] = useState(null);
+  const [projects, setProjects] = useState([]);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectTeamlead, setNewProjectTeamlead] = useState('');
+  const [isAddingProject, setIsAddingProject] = useState(false);
 
   const canViewTeam = user?.role === 'lead' || user?.role === 'admin';
   const canEditTasks = viewMode === 'my' || canViewTeam;
@@ -119,6 +123,8 @@ const TasksBoard = () => {
       if (viewMode === 'team' && filters.assignee) params.assignee = filters.assignee;
 
       const res = await api.get(endpoint, { params });
+      const projectRes = await api.get('/api/project');
+      setProjects(projectRes.data);
       setTasks(res.data);
     } catch (error) {
       toast.error('Unable to load tasks');
@@ -335,6 +341,113 @@ const TasksBoard = () => {
               ))}
             </div>
           )}
+        </div>
+
+
+        <div className=" panel" style={{ marginTop: 32 }}>
+          <div className="panel-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3>Add a Project</h3>
+              <p className="page-subtitle">Manage your projects below</p>
+            </div>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newProjectName.trim()) {
+                  toast.error('Project name is required');
+                  return;
+                }
+                try {
+                  setIsAddingProject(true);
+                  const response = await api.post('/api/project', { name: newProjectName.trim(), Teamlead: newProjectTeamlead.trim() });
+                  setProjects((prev) => [...prev, response.data]);
+                  setNewProjectName('');
+                  toast.success('Project added!');
+                } catch (err) {
+                  toast.error(err.response?.data?.message || 'Failed to add project');
+                } finally {
+                  setIsAddingProject(false);
+                }
+              }}
+              style={{ display: 'flex', gap: 16 }}
+            >
+
+              <div className="form-group">
+                <label>Project Name</label>
+                <input
+                  type="text"
+                  value={newProjectName}
+                  placeholder="Enter project name"
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  disabled={isAddingProject}
+                />
+              </div>
+              <div className="form-group">
+                <label>Teamlead</label>
+                <input
+                  type="text"
+                  value={newProjectTeamlead}
+                  placeholder="Enter Teamlead"
+                  onChange={(e) => setNewProjectTeamlead(e.target.value)}
+                  disabled={isAddingProject}
+                />
+              </div>
+              <div className="form-group">
+                <label>Add Project</label>
+                <button
+                  type="submit"
+                  disabled={isAddingProject}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'var(--primary)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '12px 16px',
+                    cursor: isAddingProject ? 'not-allowed' : 'pointer',
+                    fontWeight: 500,
+                    fontSize: 15,
+                    opacity: isAddingProject ? 0.7 : 1
+                  }}
+                >
+                  <FiPlus /> Add Project
+                </button>
+              </div>
+            </form>
+          </div>
+          <div>
+            {projects.length === 0 ? (
+              <div className="empty-state" style={{ padding: '20px 0', fontSize: 15 }}>
+                No projects yet.
+              </div>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                {projects.map((project) => (
+                  <>
+                    <li
+                      key={project._id}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: 7,
+                        fontWeight: 500,
+                        fontSize: 15,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        boxShadow: '0 1px 4px #eee'
+                      }}
+                    >
+                      {project.name}  <span style={{ color: 'var(--text-muted)' }}>-> </span>  {project.Teamlead}
+                    </li>
+                  </>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
 

@@ -136,7 +136,7 @@ const MyStandups = () => {
                         marginTop: 4,
                         whiteSpace: 'pre-line',
                         fontSize: 14,
-                      }} title={standup.planToday}>{standup.planToday}</p>
+                      }} title={standup.planToday}>{standup.planToday}</p>x
                     </div>
 
                     <div className="standup-section">

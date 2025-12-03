@@ -11,7 +11,8 @@ const TeamView = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedTeam, setSelectedTeam] = useState('');
-
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('');
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -20,11 +21,13 @@ const TeamView = () => {
     if (users.length > 0) {
       fetchTeamStandups();
     }
-  }, [selectedDate, selectedTeam]);
+  }, [selectedDate, selectedTeam, selectedProject]);
 
   const fetchUsers = async () => {
     try {
       const res = await api.get('/api/users');
+      const projectRes = await api.get('/api/project');
+      setProjects(projectRes.data);
       setUsers(res.data);
       const teams = [...new Set(res.data.map(u => u.team))];
       if (teams.length > 0 && !selectedTeam) {
@@ -42,6 +45,9 @@ const TeamView = () => {
       const params = { date: selectedDate };
       if (selectedTeam) {
         params.team = selectedTeam;
+      }
+      if (selectedProject) {
+        params.project = selectedProject;
       }
       const res = await api.get('/api/standups/team', { params });
       setStandups(res.data);
@@ -95,6 +101,18 @@ const TeamView = () => {
                 ))}
               </select>
             </div>
+            <div className="form-group">
+              <label>Project</label>
+              <select
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+              >
+                <option value="">All projects</option>
+                {projects.map(project => (
+                  <option key={project._id} value={project.name}>{project.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {loading ? (
@@ -111,19 +129,6 @@ const TeamView = () => {
                   <span className="stat-value">{missingUsers.length}</span>
                 </div>
               </div>
-
-              {missingUsers.length > 0 && (
-                <div className="panel" style={{ borderColor: 'rgba(251, 191, 36, 0.35)', background: 'rgba(251, 191, 36, 0.08)', marginBottom: 24 }}>
-                  <h3 style={{ color: 'var(--warning)', marginBottom: 12 }}>⚠️ Still pending</h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {missingUsers.map(user => (
-                      <span key={user._id} className="badge badge-member" style={{ fontSize: 13 }}>
-                        {user.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {standups.length === 0 ? (
                 <div className="empty-state">
@@ -164,15 +169,15 @@ const TeamView = () => {
                           fontSize: 12,
                           background: 'var(--primary-bg, #e5ecff)',
                           color: 'var(--primary-text, #223fa4)',
-                          padding: '2px 10px',
+                          padding: '5px 10px',
                           borderRadius: 12,
-                          fontWeight: 500,
+                          fontWeight: 600,
                           letterSpacing: 0.15,
                           textTransform: 'capitalize',
                           textAlign: 'center'
                         }}
                       >
-                        {standup.user.role}
+                        {standup.projectName || 'No Project'}
                       </span>
                       <div
                         className="standup-header"
@@ -252,6 +257,19 @@ const TeamView = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {missingUsers.length > 0 && (
+                <div className="panel" style={{ borderColor: 'rgba(251, 191, 36, 0.35)', background: 'rgba(251, 191, 36, 0.08)', marginBottom: 24 }}>
+                  <h3 style={{ color: 'var(--warning)', marginBottom: 12 }}>⚠️ Still pending</h3>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {missingUsers.map(user => (
+                      <span key={user._id} className="badge badge-member" style={{ fontSize: 13 }}>
+                        {user.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
             </>

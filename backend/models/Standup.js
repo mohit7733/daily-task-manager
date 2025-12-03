@@ -30,6 +30,10 @@ const standupSchema = new mongoose.Schema({
     type: String,
     enum: ['submitted', 'reviewed'],
     default: 'submitted'
+  },
+  projectName: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true
