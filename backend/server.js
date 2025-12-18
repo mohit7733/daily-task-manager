@@ -18,7 +18,7 @@ app.use('/api/standups', require('./routes/standups'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/project', require('./routes/project'));
-
+app.use("/api/review", require("./routes/review.routes"));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
@@ -27,6 +27,7 @@ app.get('/api/health', (req, res) => {
 // MongoDB Connection
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://mohitbeniwal_db_user:1NA0Ky4esfL6vShX@aimantra.6j4rzya.mongodb.net/';
+
 
 mongoose.connect(MONGO_URI)
   .then(() => {

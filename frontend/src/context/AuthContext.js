@@ -69,10 +69,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const sendMessage = async (messageData) => {
+    try {
+      const res = await api.post('/api/users/send-sms-reminders');
+      return res.data;
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
+      }
+      throw error;
+    }
+  };
+
   // Note: add `sendReminders` to the AuthContext.Provider value so consumers can call it.
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, loadUser, sendReminders }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, loadUser, sendReminders, sendMessage }}>
       {children}
     </AuthContext.Provider>
   );

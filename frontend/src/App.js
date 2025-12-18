@@ -14,6 +14,7 @@ import TasksBoard from './pages/TasksBoard';
 import Timeline from './pages/Timeline';
 import './App.css';
 import ForgotPassword from './forgetpassword';
+import PerformanceReviewForm from './pages/PerformanceReviewForm';
 
 function App() {
   return (
@@ -74,6 +75,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <TeamView />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/review"
+              element={
+                <PrivateRoute>
+                  <PerformanceReviewForm />
                 </PrivateRoute>
               }
             />

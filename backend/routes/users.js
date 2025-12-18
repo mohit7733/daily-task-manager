@@ -4,6 +4,7 @@ const { protect, authorize } = require('../middleware/auth');
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const Standup = require('../models/Standup');
+const twilio = require('twilio');
 
 const router = express.Router();
 
@@ -34,6 +35,31 @@ router.get('/team', protect, authorize('lead', 'admin'), async (req, res) => {
 
     const users = await User.find(query).select('-password').sort({ name: 1 });
     res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   PUT /api/users/update-team
+// @desc    Update team details by email
+// @access  Private (Lead/Admin only)
+router.put('/update-team', async (req, res) => {
+  const { users } = req.body; // Expecting an array of user objects with email and phone
+  if (!Array.isArray(users) || users.length === 0) {
+    return res.status(400).json({ message: 'Invalid input data' });
+  }
+
+  try {
+    const updatePromises = users.map(async (user) => {
+      const { email, phone } = user;
+      if (!email || !phone) return; // Skip if email or phone is missing
+
+      return User.findOneAndUpdate({ email }, { phone }, { new: true });
+    });
+
+    await Promise.all(updatePromises);
+    res.json({ message: 'Team details updated successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -214,12 +240,12 @@ async function sendDailyReminders() {
 
 
 // scheduled job: runs weekdays (Mon-Fri) at 10:00 (server timezone or specify TIMEZONE env)
-const cronSchedule = process.env.REMINDER_CRON || '0 11 * * 1-5'; // default 11:00 Mon-Fri
-cron.schedule(cronSchedule, () => {
-  sendDailyReminders().catch(console.error);
-}, {
-  timezone: process.env.TIMEZONE || 'UTC',
-});
+// const cronSchedule = process.env.REMINDER_CRON || '0 11 * * 1-5'; // default 11:00 Mon-Fri
+// cron.schedule(cronSchedule, () => {
+//   sendDailyReminders().catch(console.error);
+// }, {
+//   timezone: process.env.TIMEZONE || 'UTC',
+// });
 
 // optional admin route to trigger reminders manually
 router.post('/send-reminders', protect, authorize('lead', 'admin'), async (req, res) => {
@@ -229,6 +255,66 @@ router.post('/send-reminders', protect, authorize('lead', 'admin'), async (req, 
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to send reminders' });
+  }
+});
+
+
+
+// Twilio SMS reminder function
+
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+
+async function sendSMSReminder(user) {
+  if (!user || !user.phone) return;
+
+  const displayName = user.name || 'Team member';
+  const appUrl = 'https://daily-task-manager-seven-mu.vercel.app';
+
+  const messageBody = `Hi ${displayName}. Just a quick nudge to update today's tasks in Daily Task Manager: ${appUrl}. If you are currently on leave, you may skip this message.`;
+
+  try {
+    await twilioClient.messages.create({
+      body: messageBody,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: user.phone,
+    });
+    console.log(`SMS sent to ${user.phone}`);
+  } catch (error) {
+    console.error(`Failed to send SMS to ${user.phone}:`, error);
+  }
+}
+
+// route to send SMS reminders
+router.post('/send-sms-reminders', protect, authorize('lead', 'admin'), async (req, res) => {
+  try {
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const users = await User.find({
+      role: { $nin: ['lead', 'admin'] },
+      phone: { $exists: true, $ne: null },
+    }).select('name phone email');
+    // await sendSMSReminder(users[0]);
+    for (const user of users) {
+      const hasTaskToday = await Standup.exists({
+        user: user._id,
+        createdAt: { $gte: today, $lte: tomorrow },
+      });
+      if (!hasTaskToday) {
+        await sendSMSReminder(user);
+      }
+    }
+
+    res.json({ message: 'SMS reminders sent successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to send SMS reminders' });
   }
 });
 
